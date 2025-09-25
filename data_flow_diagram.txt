@@ -1,0 +1,197 @@
+PRESENTATION CONFIDENCE SCORING SYSTEM - DATA FLOW DIAGRAM
+====================================================================================================
+
+
+╔═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╗
+║                              REAL-TIME PRESENTATION CONFIDENCE SCORING SYSTEM                                    ║
+║                                              DATA FLOW DIAGRAM                                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   INPUT LAYER   │    │ PROCESSING LAYER│    │ ANALYSIS LAYER  │    │ SCORING LAYER   │    │  OUTPUT LAYER   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+
+┌─────────────┐        ┌─────────────┐        ┌─────────────┐        ┌─────────────┐        ┌─────────────┐
+│   WEBCAM    │ ────► │   OpenCV    │ ────► │ MediaPipe   │ ────► │             │        │             │
+│ (Video Feed)│        │(Video Proc.)│        │(Body Track.)│        │             │        │             │
+└─────────────┘        └─────────────┘        └─────────────┘        │             │        │             │
+                              │                        │              │ Confidence  │ ────► │  Tkinter/   │
+                              ▼                        ▼              │  Scoring    │        │  Console    │
+                       ┌─────────────┐        ┌─────────────┐        │  Engine     │        │ (Real-time  │
+                       │ Video Frame │        │ Body Posture│        │             │        │ Display)    │
+                       │ Processing  │        │ Keypoints   │        │             │        │             │
+                       └─────────────┘        └─────────────┘        │             │        │             │
+                                                                      │             │        │             │
+┌─────────────┐        ┌─────────────┐        ┌─────────────┐        │             │        │             │
+│ MICROPHONE  │ ────► │   Librosa   │ ────► │Audio Feature│ ────► │             │        │             │
+│(Audio Feed) │        │(Audio Proc.)│        │ Extraction  │        │             │        │             │
+└─────────────┘        └─────────────┘        └─────────────┘        └─────────────┘        └─────────────┘
+                              │                        │
+                              ▼                        ▼
+                       ┌─────────────┐        ┌─────────────┐
+                       │Audio Sample │        │ Pitch &     │
+                       │ Processing  │        │ Loudness    │
+                       └─────────────┘        │ Analysis    │
+                                              └─────────────┘
+
+DATA FLOW DETAILS:
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+1. INPUT CAPTURE:
+   • Webcam → Live video stream (30 FPS, 1080p resolution)
+   • Microphone → Live audio stream (44.1 kHz sampling rate, 16-bit depth)
+
+2. PRIMARY PROCESSING:
+   • OpenCV: Video frame capture, basic preprocessing, noise reduction
+   • Librosa: Audio segmentation, windowing, frequency analysis
+
+3. FEATURE EXTRACTION:
+   • MediaPipe: 
+     - Body landmark detection (33 pose keypoints)
+     - Movement tracking and stability analysis
+     - Posture confidence metrics
+   
+   • Audio Feature Extraction:
+     - Pitch stability analysis (fundamental frequency tracking)
+     - Loudness measurement (RMS energy, dB levels)
+     - Speech smoothness (jitter, shimmer analysis)
+
+4. CONFIDENCE SCORING ENGINE:
+   • Physical Confidence Metrics:
+     - Body movement variance (lower = more confident)
+     - Posture stability score
+     - Hand gesture consistency
+   
+   • Vocal Confidence Metrics:
+     - Pitch stability coefficient
+     - Volume consistency
+     - Speech rate analysis
+   
+   • Combined Algorithm:
+     - Weighted average of physical (40%) and vocal (60%) metrics
+     - Real-time normalization and smoothing
+     - Confidence score range: 0-100
+
+5. OUTPUT DISPLAY:
+   • Real-time confidence score update (every 1 second)
+   • Visual feedback through Tkinter GUI or console output
+   • Optional: Historical trend graph and improvement suggestions
+
+TECHNICAL SPECIFICATIONS:
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Processing Latency: < 100ms end-to-end
+Memory Usage: < 200MB RAM
+CPU Usage: Optimized for single-core processing
+Output Frequency: 1 Hz (once per second)
+Data Buffer: 5-second rolling window for stability
+
+SYSTEM REQUIREMENTS:
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+• Python 3.8+
+• OpenCV 4.5+
+• MediaPipe 0.8+
+• Librosa 0.8+
+• NumPy 1.20+
+• Tkinter (built-in with Python)
+
+DEPLOYMENT ARCHITECTURE:
+════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    MAIN APPLICATION                                                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐   │
+│  │  Video Capture  │  │  Audio Capture  │  │ Feature Extract │  │ Scoring Engine  │  │ Display Manager │   │
+│  │     Thread      │  │     Thread      │  │     Thread      │  │     Thread      │  │     Thread      │   │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘  └─────────────────┘   │
+│           │                      │                      │                      │                      │       │
+│           └──────────────────────┼──────────────────────┼──────────────────────┼──────────────────────┘       │
+│                                  │                      │                      │                              │
+│  ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                              SHARED DATA PIPELINE                                                        │ │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                    │ │
+│  │  │Video Buffer │  │Audio Buffer │  │Feature Cache│  │Score History│  │Config Store │                    │ │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘                    │ │
+│  └─────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+
+DETAILED DATA TRANSFORMATION FLOW:
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+STEP 1: RAW DATA ACQUISITION
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Input: Hardware sensors
+Process: 
+  • Webcam captures RGB frames (1920x1080 @ 30fps)
+  • Microphone captures PCM audio (44100Hz, 16-bit, mono)
+Output: Raw binary streams
+
+STEP 2: INITIAL PROCESSING
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Input: Raw video/audio streams
+Process:
+  • OpenCV: Frame extraction, color space conversion, resize to 640x480
+  • Librosa: Audio windowing (2048 samples), FFT preprocessing
+Output: Processed frames and audio segments
+
+STEP 3: FEATURE DETECTION
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Input: Processed video frames and audio segments
+Process:
+  • MediaPipe: Pose estimation → 33 3D landmarks per frame
+  • Librosa: STFT → frequency domain representation
+Output: Numerical feature vectors
+
+STEP 4: CONFIDENCE ANALYSIS
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Input: Feature vectors
+Process:
+  Physical Analysis:
+    • Calculate movement variance: std_dev(landmark_positions)
+    • Posture stability: deviation from ideal pose
+    • Hand steadiness: wrist position variance
+  
+  Vocal Analysis:
+    • Pitch tracking: fundamental frequency extraction
+    • Volume analysis: RMS energy calculation
+    • Speech rate: zero-crossing rate analysis
+Output: Confidence metrics (0-1 scale)
+
+STEP 5: SCORE COMPUTATION
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Input: Physical and vocal confidence metrics
+Process:
+  • Weighted combination: final_score = 0.4 × physical + 0.6 × vocal
+  • Temporal smoothing: 5-second exponential moving average
+  • Scale conversion: multiply by 100 for percentage
+Output: Final confidence score (0-100)
+
+STEP 6: DISPLAY UPDATE
+────────────────────────────────────────────────────────────────────────────────────────────────────────────
+Input: Confidence score
+Process:
+  • GUI update via Tkinter event system
+  • Score history tracking for trend analysis
+  • Optional: Color coding (red: <50, yellow: 50-75, green: >75)
+Output: Visual feedback to user
+
+DATA PIPELINE PERFORMANCE METRICS:
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+Frame Processing Rate: 30 FPS
+Audio Processing Rate: 21.5 Hz (44100/2048)
+Feature Extraction Rate: 30 Hz (limited by video)
+Confidence Update Rate: 1 Hz
+Total Latency: ~83ms (3 frames delay)
+
+ERROR HANDLING & ROBUSTNESS:
+═══════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+• Camera disconnection: Fallback to audio-only mode
+• Poor lighting: Enhanced contrast and noise reduction
+• Background noise: Spectral subtraction filtering
+• Occlusion: Temporal interpolation of missing landmarks
+• System overload: Dynamic quality reduction
